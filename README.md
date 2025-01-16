@@ -92,7 +92,7 @@ The core idea is to allow an agent to *continuously update* its internal weights
 - `asyncio` (standard Python library for asynchronous I/O).
 
 ### 3. **Installation**
-```bash
+
 pip install torch
 # If you have groq:
 pip install groq
@@ -182,7 +182,8 @@ Acknowledgments
 Titans Paper & Inspiration: This code is inspired by the research on “Titans: Learning to Memorize at Test Time.”
 PyTorch: for autograd, optimizers, and modules.
 Any Additional Tools or resources that influenced this approach.
+
 Contact
-Author: [Your Name] – [Your Email or LinkedIn]
-Project Repository: (If you host it on GitHub/GitLab, add the link.)
+Author: Christian Johnson - cjohnson@metisos.com
+
 Thank you for checking out this README. Feel free to experiment, modify, and extend the Titans-based agent to suit your own needs!
