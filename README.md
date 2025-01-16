@@ -1,109 +1,119 @@
-#Titans Agent with Adaptive Test-Time Memory
-Author: Christian Johsnon
-Date: 01/16/2025
+# **Titans Agent with Adaptive Test-Time Memory**
 
-1. Overview
-This repository implements a prototype Titans-based AI agent that combines three crucial memory concepts:
+**Author**: *Christian Johnson*  
+**Date**: *01/16/2025*  
 
-Persistent (Meta) Memory
-Short-Term (Attention) Memory
-Long-Term (Deep Neural) Memory
-The core idea is to allow an agent to continuously update its internal weights at inference/test time in response to the user’s inputs. This approach borrows from the research on “Titans” (short for “Test-time Inference with Training at test time Architecture for Neural memory System”), offering:
+## **1. Overview**
 
-A deep neural memory module for storing key → value associations (updated online).
-A short-term attention module for immediate context.
-A persistent memory store that remains invariant at inference (or can be optionally trained beforehand).
-These modules enable the agent to maintain richer context, adapt to surprising inputs, and recall information over longer conversations than a basic sliding-window approach.
+This repository implements a prototype **Titans-based AI agent** that combines three crucial memory concepts:
 
-2. Script Structure
-PersistentMemory
+1. **Persistent (Meta) Memory**  
+2. **Short-Term (Attention) Memory**  
+3. **Long-Term (Deep Neural) Memory**
 
-Stores a small set of learnable tokens representing global meta-knowledge.
-By default, the tokens are frozen during inference (freeze() method).
-If training is desired, unfreeze them (unfreeze()) before training.
-DeepNeuralMemory
+The core idea is to allow an agent to *continuously update* its internal weights **at inference/test time** in response to the user’s inputs. This approach borrows from the research on “Titans” (short for “Test-time Inference with Training at test time Architecture for Neural memory System”), offering:
 
-A multi-layer perceptron (MLP) to learn key → value mappings at test time.
-Each forward pass can operate in two modes:
-mode="kv": interpret input as raw embeddings to produce (k, v).
-mode="pred": interpret input as keys, returning predicted values.
-This module uses standard PyTorch linear layers and ReLUs.
-SimpleAttentionBlock
+- A **deep neural memory** module for storing key → value associations (updated online).  
+- A **short-term attention** module for immediate context.  
+- A **persistent memory** store that remains invariant at inference (or can be optionally trained beforehand).
 
-A multi-head self-attention mechanism, providing short-term memory.
-Splits queries, keys, and values across multiple heads, computes softmax attention, then recombines them.
-Used to focus on the most recent context (including persistent tokens + user’s short-term memory buffer).
-TitansAgent
+---
 
-Brings everything together. Key components:
-Short-term capacity: Deque for recent user messages.
-Long-term memory (DeepNeuralMemory) updated online.
-Persistent memory (PersistentMemory) holding meta-knowledge tokens.
-Attention block for short-term context.
-Test-time training logic for deciding when and how to update the neural memory.
-Adaptive gating / “surprise”:
-Computes a “surprise score” (gradient magnitude) for new user embeddings.
-If above surprise_threshold, the embedding is queued in a chunk_buffer.
-Whenever this buffer reaches chunk_size, we apply a Delta Rule update:
-Convert embeddings → (keys, values).
-Compare predicted values with actual values.
-Take an SGD step to optimize the memory weights.
-main()
+## **2. Script Structure**
 
-Runs a simple console-based chat loop.
-Prompts for user input, processes it, and displays the agent’s response.
-Type quit or exit to terminate.
-3. Key Features
-Adaptive Gating (“Surprise” Metric)
+### 1. **`PersistentMemory`**
+- Stores a small set of learnable tokens representing *global meta-knowledge*.  
+- By default, the tokens are frozen during inference (`freeze()` method).  
+- If training is desired, unfreeze them (`unfreeze()`) before training.
 
-The script measures gradient norm on a small forward/backward pass to decide if an input is “surprising.”
-Surprising inputs get stored in the chunk_buffer and eventually update the memory.
-Chunk-Based Updates
+### 2. **`DeepNeuralMemory`**
+- A multi-layer perceptron (MLP) to learn *key → value* mappings at test time.  
+- Each forward pass can operate in two modes:  
+  - `mode="kv"`: Interpret input as raw embeddings to produce `(k, v)`.  
+  - `mode="pred"`: Interpret input as keys, returning predicted values.  
+- This module uses standard PyTorch linear layers and ReLUs.
 
-Instead of updating memory on every token, the agent waits until chunk_buffer hits a certain size (chunk_size) to do a more efficient batched update.
-Separation of Memory Components
+### 3. **`SimpleAttentionBlock`**
+- A multi-head self-attention mechanism, providing *short-term memory*.  
+- Splits queries, keys, and values across multiple heads, computes softmax attention, then recombines them.  
+- Used to focus on the most recent context (including persistent tokens + user’s short-term memory buffer).
 
-Persistent memory for domain knowledge or meta tokens.
-Short-term memory (the attention-based mechanism) focusing on the immediate past.
-Long-term memory (the MLP) that actually changes weights at inference time.
-Extensibility
+### 4. **`TitansAgent`**
+- Brings everything together. Key components:
+  - **Short-term capacity**: Deque for recent user messages.  
+  - **Long-term memory** (`DeepNeuralMemory`) updated online.  
+  - **Persistent memory** (`PersistentMemory`) holding meta-knowledge tokens.  
+  - **Attention block** for short-term context.  
+  - **Test-time training** logic for deciding when and how to update the neural memory.  
+- **Adaptive gating / “surprise”**:  
+  - Computes a “surprise score” (gradient magnitude) for new user embeddings.  
+  - If above `surprise_threshold`, the embedding is queued in a *chunk_buffer*.  
+  - Whenever this buffer reaches `chunk_size`, we apply a *Delta Rule* update:  
+    1. Convert embeddings → (keys, values).  
+    2. Compare predicted values with actual values.  
+    3. Take an SGD step to optimize the memory weights.
 
-Easily modify memory depth (num_layers) or gating threshold to adapt to different tasks.
-Swap in different front-end embedding logic (currently ASCII-based).
-Replace the external LLM call (groq_client) with any language model API.
-4. Installation & Dependencies
-Python Version
+### 5. **`main()`**
+- Runs a simple console-based chat loop.  
+- Prompts for user input, processes it, and displays the agent’s response.  
+- Type `quit` or `exit` to terminate.
 
-Python 3.7+ recommended.
-Dependencies
+---
 
-torch (PyTorch) for automatic differentiation, tensor operations, and optimizers.
-groq (or a mock client if not installed).
-asyncio (standard Python library for asynchronous I/O).
-Installation
+## **3. Key Features**
 
+1. **Adaptive Gating (“Surprise” Metric)**
+   - The script measures gradient norm on a small forward/backward pass to decide if an input is “surprising.”  
+   - Surprising inputs get stored in the *chunk_buffer* and eventually update the memory.
 
+2. **Chunk-Based Updates**
+   - Instead of updating memory on *every* token, the agent waits until `chunk_buffer` hits a certain size (`chunk_size`) to do a more efficient batched update.
+
+3. **Separation of Memory Components**
+   - **Persistent memory** for domain knowledge or meta tokens.  
+   - **Short-term memory** (the attention-based mechanism) focusing on the immediate past.  
+   - **Long-term memory** (the MLP) that actually changes weights at inference time.
+
+4. **Extensibility**
+   - Easily modify memory depth (`num_layers`) or gating threshold to adapt to different tasks.  
+   - Swap in different front-end embedding logic (currently ASCII-based).  
+   - Replace the external LLM call (`groq_client`) with any language model API.
+
+---
+
+## **4. Installation & Dependencies**
+
+### 1. **Python Version**
+- Python 3.7+ recommended.
+
+### 2. **Dependencies**
+- `torch` (PyTorch) for automatic differentiation, tensor operations, and optimizers.  
+- `groq` (or a *mock* client if not installed).  
+- `asyncio` (standard Python library for asynchronous I/O).
+
+### 3. **Installation**
+```bash
 pip install torch
 # If you have groq:
 pip install groq
 # or omit if you plan to rely on the mock client
 5. Running the Script
-Command
-
-
+1. Command
+bash
+Copy
+Edit
 python surprise.py
 Where surprise.py is your main script file.
 
-Interactive Chat
-
+2. Interactive Chat
 Once it starts, you’ll see a message:
 arduino
 Copy
+Edit
 === Welcome to the upgraded TitansAgent interactive chat ===
 Type 'quit' or 'exit' to stop.
 Type your input at User:, and press Enter. The agent responds with [TitansAgent] ....
-Terminating
-
+3. Terminating
 Type quit or exit at the user prompt.
 6. How It Works (High-Level)
 User Input → Embedding
@@ -172,8 +182,7 @@ Acknowledgments
 Titans Paper & Inspiration: This code is inspired by the research on “Titans: Learning to Memorize at Test Time.”
 PyTorch: for autograd, optimizers, and modules.
 Any Additional Tools or resources that influenced this approach.
-
 Contact
-Author: Christian Johnson - cjohson@metisos.com
-
-Thank you for checking out this Whitepaper README. Feel free to experiment, modify, and extend the Titans-based agent to suit your own needs!
+Author: [Your Name] – [Your Email or LinkedIn]
+Project Repository: (If you host it on GitHub/GitLab, add the link.)
+Thank you for checking out this README. Feel free to experiment, modify, and extend the Titans-based agent to suit your own needs!
