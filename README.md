@@ -82,8 +82,7 @@ groq (or a mock client if not installed).
 asyncio (standard Python library for asynchronous I/O).
 Installation
 
-bash
-Copy
+
 pip install torch
 # If you have groq:
 pip install groq
@@ -91,8 +90,7 @@ pip install groq
 5. Running the Script
 Command
 
-bash
-Copy
+
 python surprise.py
 Where surprise.py is your main script file.
 
