@@ -371,7 +371,7 @@ async def main():
             def __init__(self, api_key=None):
                 self.chat = MockChat()
 
-    groq_client = Groq(api_key="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")
+    groq_client = Groq(api_key="YOUR_GROQ_API_KEY")
 
     # Example usage: vary memory depth easily
     agent = TitansAgent(
